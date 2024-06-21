@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5002;
@@ -36,7 +36,9 @@ async function run() {
         res.send(result)
     })
     app.get('/sellermedicine', async(req,res)=>{
-        const cursor = medicineCollection.find();
+      const email = req.query.email;
+      const query = {email: email}
+        const cursor = medicineCollection.find(query);
         result = await cursor.toArray();
         res.send(result)
     })
@@ -52,6 +54,20 @@ async function run() {
       const result = await cartsCollection.insertOne(cartItem);
       res.send(result)
     })
+    app.delete('/carts/:id', async(req,res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await cartsCollection.deleteOne(query);
+      res.send(result)
+    })
+    app.patch('/carts/:id', async (req, res) => {
+      const id = req.params.id;
+      const { quantity } = req.body;
+      const query = { _id: new ObjectId(id) };
+      const update = { $set: { quantity: quantity } };
+      const result = await cartsCollection.updateOne(query, update);
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
