@@ -12,7 +12,7 @@ app.use(express.json());
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4b5mrxj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-console.log(uri)
+
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -25,13 +25,39 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+    const categoriesCollection =client.db('medicineDb').collection('categories');
+    const medicineCollection =client.db('medicineDb').collection('sellermedicine');
+    const cartsCollection =client.db('medicineDb').collection('carts');
+
+    app.get('/categories', async(req,res)=>{
+        const cursor = categoriesCollection.find();
+        result = await cursor.toArray();
+        res.send(result)
+    })
+    app.get('/sellermedicine', async(req,res)=>{
+        const cursor = medicineCollection.find();
+        result = await cursor.toArray();
+        res.send(result)
+    })
+
+    // carts collection
+    app.get('/carts', async(req,res)=>{
+      const cursor = cartsCollection.find();
+      result = await cursor.toArray();
+      res.send(result)
+  })
+    app.post('/carts', async(req,res) => {
+      const cartItem = req.body;
+      const result = await cartsCollection.insertOne(cartItem);
+      res.send(result)
+    })
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    
   }
 }
 run().catch(console.dir);
