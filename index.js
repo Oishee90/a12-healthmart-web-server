@@ -36,7 +36,7 @@ async function run() {
     app.post('/jwt',async(req,res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACESS_TOKEN_SECRET,
-        {expiresIn: '1h'}
+        {expiresIn: '2h'}
       
       )
       res.send({token});
@@ -57,7 +57,7 @@ async function run() {
       })
    
     }
-     const verifyAdmin = async (req,res, next ) => {
+    const verifyAdmin= async (req,res, next ) => {
       const email = req.decoded.email;
       const query = {email: email};
       const user = await usersCollection.findOne(query);
@@ -67,21 +67,48 @@ async function run() {
       };
       next()
      }
-     const verifySeller= async (req,res, next ) => {
-      const email = req.decoded.email;
-      const query = {email: email};
-      const user = await usersCollection.findOne(query);
-      const isSeller = user?.role === 'seller';
-      if(!isSeller){
-        return res.status(403).send({message : 'forbidden access'})
-      };
-      next()
-     }
+    //  const verifySeller= async (req,res, next ) => {
+    //   const email = req.decoded.email;
+    //   const query = {email: email};
+    //   const user = await usersCollection.findOne(query);
+    //   const isSeller = user?.role === 'seller';
+    //   if(!isSeller){
+    //     return res.status(403).send({message : 'forbidden access'})
+    //   };
+    //   next()
+    //  }
+    // categories
     app.get('/categories', async(req,res)=>{
         const cursor = categoriesCollection.find();
         result = await cursor.toArray();
         res.send(result)
     })
+    app.delete('/categories/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await categoriesCollection.deleteOne(query);
+      res.send(result);
+  });
+  app.put('/categories/:id', async (req, res) => {
+    const id = req.params.id;
+    const categorieData = req.body;
+    const query = { _id: new ObjectId(id) };
+    const options = { upsert: true };
+    const updateDoc = {
+      $set: {
+        ...categorieData,
+      },
+    };
+  
+    try {
+      const result = await categoriesCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    } catch (error) {
+      console.error('Error updating category:', error);
+      res.status(500).send({ error: 'Internal server error' });
+    }
+  });
+  
     app.get('/sellermedicine', async(req,res)=>{
       const email = req.query.email;
       const query = {email: email}
@@ -120,14 +147,28 @@ async function run() {
       res.send(result);
     });
     // users collection
-    app.get('/users',verifyToken,verifyAdmin, async(req,res)=>{
+    app.get('/users',verifyToken, async(req,res)=>{
       // console.log(req.headers)
       const cursor = usersCollection.find();
       result = await cursor.toArray();
       res.send(result)
   })
+  // admin
+  app.get('/users/admin/:email',verifyToken,verifyAdmin, async(req,res)=>{
+    const email = req.params.email;
+   if( email !== req.decoded.email){
+    return res.status(403).send({message: 'unauthorized access'})
+   }
+   const query  = {email:email };
+   const user = await usersCollection.findOne(query);
+   let admin = false;
+   if(user){
+    admin = user?.role === 'admin';
+   }
+   res.send({ admin });
+})
   // seller
-  app.get('/users/seller/:email',verifyToken,verifySeller, async(req,res)=>{
+  app.get('/users/seller/:email',verifyToken, async(req,res)=>{
     const email = req.params.email;
    if( email !== req.decoded.email){
     return res.status(403).send({message: 'unauthorized access'})
@@ -140,20 +181,8 @@ async function run() {
    }
    res.send({ seller });
 })
-app.get('/users/seller/:email',verifyToken, async(req,res)=>{
-  const email = req.params.email;
- if( email !== req.decoded.email){
-  return res.status(403).send({message: 'unauthorized access'})
- }
- const query  = {email:email };
- const user = await usersCollection.findOne(query);
- let seller = false;
- if(user){
-  seller = user?.role === 'seller';
- }
- res.send({ seller });
-})
-// admin
+
+// user
   app.get('/users/user/:email',verifyToken, async(req,res)=>{
     const email = req.params.email;
    if( email !== req.decoded.email){
@@ -183,7 +212,7 @@ app.get('/users/seller/:email',verifyToken, async(req,res)=>{
       const result = await usersCollection.deleteOne(query);
       res.send(result)
     })
-    app.put('/users/:id/role',verifyToken,verifyAdmin, async (req, res) => {
+    app.put('/users/:id/role',verifyToken, async (req, res) => {
       const id = req.params.id;
       const newRole = req.body.role;
       try {
@@ -199,6 +228,7 @@ app.get('/users/seller/:email',verifyToken, async(req,res)=>{
         res.status(500).send({ error: 'An error occurred while updating the user role.' });
       }
     });
+
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
