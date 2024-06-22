@@ -83,6 +83,13 @@ async function run() {
         result = await cursor.toArray();
         res.send(result)
     })
+    app.post("/categories", async (req, res) => {
+      const newItem = req.body;
+      console.log(newItem);
+      const result = await categoriesCollection.insertOne(newItem)
+      res.send(result)
+      // Here you can add your logic to save the new food item to the database
+    });
     app.delete('/categories/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
