@@ -70,6 +70,11 @@ async function run() {
       res.send(result);
     });
     // users collection
+    app.get('/users', async(req,res)=>{
+      const cursor = usersCollection.find();
+      result = await cursor.toArray();
+      res.send(result)
+  })
     app.post('/users', async(req,res) => {
       const user = req.body;
       const query = {email: user.email}
@@ -80,6 +85,28 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result)
     })
+    app.delete('/users/:id', async(req,res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await usersCollection.deleteOne(query);
+      res.send(result)
+    })
+    app.put('/users/:id/role', async (req, res) => {
+      const id = req.params.id;
+      const newRole = req.body.role;
+      try {
+        const query = { _id: new ObjectId(id) };
+        const update = { $set: { role: newRole } };
+        const result = await usersCollection.updateOne(query, update);
+        if (result.modifiedCount > 0) {
+          res.send({ message: 'User role updated successfully.' });
+        } else {
+          res.send({ message: 'No changes made to the user role.' });
+        }
+      } catch (error) {
+        res.status(500).send({ error: 'An error occurred while updating the user role.' });
+      }
+    });
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
