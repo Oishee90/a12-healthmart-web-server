@@ -7,7 +7,15 @@ const app = express();
 const port = process.env.PORT || 5002;
 
 // middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      " http://localhost:5179",
+      "https://medicine-selling-website.web.app",
+      "https://medicine-selling-website.firebaseapp.com",
+    ]
+  })
+);
 app.use(express.json());
 
 
@@ -123,6 +131,13 @@ async function run() {
         result = await cursor.toArray();
         res.send(result)
     })
+    app.post("/sellermedicine", async (req, res) => {
+      const newItem = req.body;
+      console.log(newItem);
+      const result = await medicineCollection.insertOne(newItem)
+      res.send(result)
+      // Here you can add your logic to save the new food item to the database
+    });
 
     // carts collection
     app.get('/carts', async (req, res) => {
