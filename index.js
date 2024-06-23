@@ -36,6 +36,7 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
     const categoriesCollection =client.db('medicineDb').collection('categories');
+    const companiesCollection =client.db('medicineDb').collection('companies');
     const medicineCollection =client.db('medicineDb').collection('sellermedicine');
     const cartsCollection =client.db('medicineDb').collection('carts');
     const usersCollection =client.db('medicineDb').collection('users');
@@ -85,6 +86,19 @@ async function run() {
     //   };
     //   next()
     //  }
+    // companies
+    app.get('/companies', async(req,res)=>{
+      const cursor = companiesCollection.find();
+      result = await cursor.toArray();
+      res.send(result)
+  })
+  app.post("/companies", async (req, res) => {
+    const newItem = req.body;
+    console.log(newItem);
+    const result = await companiesCollection.insertOne(newItem)
+    res.send(result)
+    // Here you can add your logic to save the new food item to the database
+  });
     // categories
     app.get('/categories', async(req,res)=>{
         const cursor = categoriesCollection.find();
@@ -138,6 +152,12 @@ async function run() {
       res.send(result)
       // Here you can add your logic to save the new food item to the database
     });
+    app.delete('/sellermedicine/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await medicineCollection.deleteOne(query);
+      res.send(result);
+  });
 
     // carts collection
     app.get('/carts', async (req, res) => {
