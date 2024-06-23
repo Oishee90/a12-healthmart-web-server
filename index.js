@@ -11,7 +11,7 @@ const port = process.env.PORT || 5002;
 app.use(
   cors({
     origin: [
-      " http://localhost:5179",
+      "http://localhost:5173",
       "https://medicine-selling-website.web.app",
       "https://medicine-selling-website.firebaseapp.com",
     ]
@@ -291,6 +291,14 @@ async function run() {
       }
     });
     // payment related api
+    app.get('/payments/:email', verifyToken, async (req, res) => {
+      const query = { email: req.params.email }
+      if (req.params.email !== req.decoded.email) {
+        return res.status(403).send({ message: 'forbidden access' });
+      }
+      const result = await paymentCollection.find(query).toArray();
+      res.send(result);
+    })
     app.post('/payments', async(req,res) =>{
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment)
@@ -299,8 +307,9 @@ async function run() {
         $in: payment.cartIds.map(id => new ObjectId(id))
       }}
       const  deleteResult = await cartsCollection.deleteMany(query);
-      res.send(paymentResult,deleteResult)
+      res.send({paymentResult,deleteResult})
     })
+
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
