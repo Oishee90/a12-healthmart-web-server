@@ -169,14 +169,14 @@ async function run() {
       res.send(result);
     });
     // users collection
-    app.get('/users',verifyToken, async(req,res)=>{
+    app.get('/users', async(req,res)=>{
       // console.log(req.headers)
       const cursor = usersCollection.find();
       result = await cursor.toArray();
-      res.send(result)
+      res.send(result)  
   })
   // admin
-  app.get('/users/admin/:email',verifyToken,verifyAdmin, async(req,res)=>{
+  app.get('/users/admin/:email',verifyToken, async(req,res)=>{
     const email = req.params.email;
    if( email !== req.decoded.email){
     return res.status(403).send({message: 'unauthorized access'})
@@ -190,7 +190,7 @@ async function run() {
    res.send({ admin });
 })
   // seller
-  app.get('/users/seller/:email',verifyToken, async(req,res)=>{
+  app.get('/users/seller/:email',verifyToken,async(req,res)=>{
     const email = req.params.email;
    if( email !== req.decoded.email){
     return res.status(403).send({message: 'unauthorized access'})
@@ -234,7 +234,7 @@ async function run() {
       const result = await usersCollection.deleteOne(query);
       res.send(result)
     })
-    app.put('/users/:id/role',verifyToken, async (req, res) => {
+    app.put('/users/:id/role',verifyToken,verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const newRole = req.body.role;
       try {
