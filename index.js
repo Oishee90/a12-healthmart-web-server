@@ -41,6 +41,7 @@ async function run() {
     const medicineCollection =client.db('medicineDb').collection('sellermedicine');
     const cartsCollection =client.db('medicineDb').collection('carts');
     const usersCollection =client.db('medicineDb').collection('users');
+    const paymentCollection =client.db('medicineDb').collection('payments');
 
 // jwt  related api
     app.post('/jwt',async(req,res) => {
@@ -289,6 +290,17 @@ async function run() {
         res.status(500).send({ error: 'An error occurred while updating the user role.' });
       }
     });
+    // payment related api
+    app.post('/payments', async(req,res) =>{
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment)
+      // delete each item from the cart
+      const query = {_id: {
+        $in: payment.cartIds.map(id => new ObjectId(id))
+      }}
+      const  deleteResult = await cartsCollection.deleteMany(query);
+      res.send(paymentResult,deleteResult)
+    })
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
